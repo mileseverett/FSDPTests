@@ -192,7 +192,7 @@ my_strategy = DDPFullyShardedNativeStrategy(cpu_offload=CPUOffload(offload_param
 
 from neptune.new.integrations.pytorch_lightning import NeptuneLogger
 
-print(f'{os.environ["NEPTUNE_PROJECT"]}, {os.environ["NEPTUNE_API_TOKEN"]}')
+# print(f'{os.environ["NEPTUNE_PROJECT"]}, {os.environ["NEPTUNE_API_TOKEN"]}')
 
 neptune_logger = NeptuneLogger(
     mode="async",
@@ -203,7 +203,7 @@ neptune_logger = NeptuneLogger(
     log_model_checkpoints=False
 )
 
-trainer = pl.Trainer(max_epochs=5, fast_dev_run=True, default_root_dir=os.getcwd(), strategy=my_strategy, accelerator="gpu", devices=1, log_every_n_steps=25, callbacks=[TimeEpochCallback()], logger=neptune_logger, precision=32, enable_progress_bar=False) #gpus=1
+trainer = pl.Trainer(max_epochs=5, fast_dev_run=False, default_root_dir=os.getcwd(), strategy="deepspeed_stage_1", accelerator="gpu", devices=1, log_every_n_steps=25, callbacks=[TimeEpochCallback()], logger=neptune_logger, precision=32, enable_progress_bar=False) #gpus=1
 
 print("PRINTING GPU INFO")
 
