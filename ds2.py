@@ -87,21 +87,21 @@ class RN(pl.LightningModule):
         loss, acc = self.shared_step(batch)
 
         self.log_dict({'train_acc': acc, 'train_loss': loss},
-                prog_bar=True, on_epoch=True)
+                prog_bar=True, on_epoch=True, sync_dist=True)
 
         return loss
 
     def validation_step(self, batch, batch_idx):
         loss, acc = self.shared_step(batch)
         self.log_dict({'validation_acc': acc, 'validation_loss': loss},
-                prog_bar=True, on_epoch=True)
+                prog_bar=True, on_epoch=True, sync_dist=True)
 
         return
 
     def test_step(self, batch, batch_idx):
         loss, acc = self.shared_step(batch)
         self.log_dict({'test_acc': acc, 'test_loss': loss},
-                prog_bar=True, on_epoch=True)
+                prog_bar=True, on_epoch=True, sync_dist=True)
 
 
     def configure_optimizers(self):

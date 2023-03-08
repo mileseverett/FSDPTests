@@ -48,17 +48,22 @@ class ResNet(nn.Module):
         for _ in range(num_blocks):
             self.blocks.append(ResidualBlock(channels, channels, 1))
 
-        self.conv_out = nn.Conv2d(in_channels=channels, out_channels=classes, kernel_size=1, stride=1, bias=False)
+        # self.conv_out = nn.Conv2d(in_channels=channels, out_channels=classes, kernel_size=1, stride=1, bias=False)
+
+        self.flatten = nn.Flatten()
+        self.out = nn.Linear(in_features=43264, out_features=classes, bias=False)
 
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.softmax = nn.Softmax(dim=-1)
         self.relu = nn.ReLU()
 
     def forward(self, x):
+        b, c, h, w = x.size()
         x = self.relu(self.conv1(x))
         for layer in self.blocks:
             x = self.relu(layer(x))
-        return self.softmax(self.avg_pool(self.conv_out(x)).squeeze(-1).squeeze(-1))
+        return self.softmax(self.out(x.view(b, -1)))
+        # return self.softmax(self.avg_pool(self.conv_out(x)).squeeze(-1).squeeze(-1))
 
 def rank_zero_check():
     #if it is not on slurm (maxwell/cirrus) and not
@@ -87,21 +92,21 @@ class RN(pl.LightningModule):
         loss, acc = self.shared_step(batch)
 
         self.log_dict({'train_acc': acc, 'train_loss': loss},
-                prog_bar=True, on_epoch=True)
+                prog_bar=True, on_epoch=True, sync_dist=True)
 
         return loss
 
     def validation_step(self, batch, batch_idx):
         loss, acc = self.shared_step(batch)
         self.log_dict({'validation_acc': acc, 'validation_loss': loss},
-                prog_bar=True, on_epoch=True)
+                prog_bar=True, on_epoch=True, sync_dist=True)
 
         return
 
     def test_step(self, batch, batch_idx):
         loss, acc = self.shared_step(batch)
         self.log_dict({'test_acc': acc, 'test_loss': loss},
-                prog_bar=True, on_epoch=True)
+                prog_bar=True, on_epoch=True, sync_dist=True)
 
 
     def configure_optimizers(self):
@@ -197,7 +202,7 @@ from neptune.new.integrations.pytorch_lightning import NeptuneLogger
 neptune_logger = NeptuneLogger(
     mode="async",
     api_key=None,
-    project=os.environ["NEPTUNE_PROJECT"],
+    project="mileseverett/dorp",
     name="Testing",  # Optional,
     tags=["Test"],  # Optional,
     log_model_checkpoints=False
